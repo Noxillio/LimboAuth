@@ -67,6 +67,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -530,6 +531,45 @@ public class LimboAuth {
     }
   }
 
+  public void reconcileRecordsForPremiumPlayer(String username, UUID premiumUuid) {
+    try {
+      String uuidString = premiumUuid.toString();
+      String usernameLowercase = username.toLowerCase(Locale.ROOT);
+
+      RegisteredPlayer registeredPlayer = AuthSessionHandler.fetchInfo(this.playerDao, username);
+      if (registeredPlayer != null && !registeredPlayer.getPremiumUuid().equalsIgnoreCase(uuidString)) {
+        String placeholder = registeredPlayer.getPremiumUuid().toLowerCase(Locale.ROOT);
+        if (this.playerDao.idExists(placeholder)) {
+          this.playerDao.deleteById(usernameLowercase);
+        } else {
+          this.rekeyRecord(usernameLowercase, placeholder, placeholder);
+        }
+      }
+
+      List<RegisteredPlayer> allRecordsMatchingUuid = this.playerDao.queryForEq(RegisteredPlayer.PREMIUM_UUID_FIELD, uuidString);
+      if (allRecordsMatchingUuid.isEmpty()) return;
+
+      RegisteredPlayer recordToKeep = allRecordsMatchingUuid.stream().max(Comparator.comparingLong(RegisteredPlayer::getLoginDate)).get();
+      for (RegisteredPlayer record : allRecordsMatchingUuid) {
+        if (record != recordToKeep) this.playerDao.deleteById(record.getLowercaseNickname());
+      }
+
+      this.rekeyRecord(recordToKeep.getLowercaseNickname(), usernameLowercase, username);
+    } catch (SQLException e) {
+      throw new SQLRuntimeException(e);
+    }
+  }
+
+  private void rekeyRecord(String oldLowercaseNickname, String newLowercaseNickname, String newNickname) throws SQLException {
+    UpdateBuilder<RegisteredPlayer, String> updateBuilder = this.playerDao.updateBuilder();
+
+    updateBuilder.where().eq(RegisteredPlayer.LOWERCASE_NICKNAME_FIELD, oldLowercaseNickname);
+    updateBuilder.updateColumnValue(RegisteredPlayer.NICKNAME_FIELD, newNickname);
+    updateBuilder.updateColumnValue(RegisteredPlayer.LOWERCASE_NICKNAME_FIELD, newLowercaseNickname);
+
+    updateBuilder.update();
+  }
+
   public void cacheAuthUser(Player player) {
     String username = player.getUsername();
     String lowercaseUsername = username.toLowerCase(Locale.ROOT);
@@ -584,7 +624,8 @@ public class LimboAuth {
         RegisteredPlayer nicknameRegisteredPlayer = registeredPlayer;
         registeredPlayer = AuthSessionHandler.fetchInfo(this.playerDao, player.getUniqueId());
 
-        if (nicknameRegisteredPlayer != null && registeredPlayer == null && nicknameRegisteredPlayer.getHash().isEmpty()) {
+        if (nicknameRegisteredPlayer != null && registeredPlayer == null && nicknameRegisteredPlayer.getHash().isEmpty()
+            && nicknameRegisteredPlayer.getPremiumUuid().isEmpty()) {
           registeredPlayer = nicknameRegisteredPlayer;
           registeredPlayer.setPremiumUuid(player.getUniqueId().toString());
           try {

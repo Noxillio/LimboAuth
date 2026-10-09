@@ -184,7 +184,12 @@ public class AuthListener {
 
   @Subscribe(order = PostOrder.FIRST)
   public void onGameProfileRequest(GameProfileRequestEvent event) {
-    if (Settings.IMP.MAIN.SAVE_UUID && (this.floodgateApi == null || !this.floodgateApi.isFloodgatePlayer(event.getOriginalProfile().getId()))) {
+    boolean isFloodgatePlayer = this.floodgateApi != null && this.floodgateApi.isFloodgatePlayer(event.getOriginalProfile().getId());
+    if (event.isOnlineMode() && !isFloodgatePlayer) {
+      this.plugin.reconcileRecordsForPremiumPlayer(event.getUsername(), event.getOriginalProfile().getId());
+    }
+
+    if (Settings.IMP.MAIN.SAVE_UUID && !isFloodgatePlayer) {
       RegisteredPlayer registeredPlayer = AuthSessionHandler.fetchInfo(this.playerDao, event.getOriginalProfile().getId());
 
       if (registeredPlayer != null && !registeredPlayer.getUuid().isEmpty()) {
@@ -193,9 +198,9 @@ public class AuthListener {
       }
       registeredPlayer = AuthSessionHandler.fetchInfo(this.playerDao, event.getUsername());
 
-      if (registeredPlayer != null) {
+      if (registeredPlayer != null && (!event.isOnlineMode() || registeredPlayer.getPremiumUuid().isEmpty()
+          || registeredPlayer.getPremiumUuid().equalsIgnoreCase(event.getOriginalProfile().getId().toString()))) {
         String currentUuid = registeredPlayer.getUuid();
-
         if (currentUuid.isEmpty()) {
           try {
             registeredPlayer.setUuid(event.getGameProfile().getId().toString());
