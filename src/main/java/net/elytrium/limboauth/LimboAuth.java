@@ -547,11 +547,15 @@ public class LimboAuth {
       }
 
       List<RegisteredPlayer> allRecordsMatchingUuid = this.playerDao.queryForEq(RegisteredPlayer.PREMIUM_UUID_FIELD, uuidString);
-      if (allRecordsMatchingUuid.isEmpty()) return;
+      if (allRecordsMatchingUuid.isEmpty()) {
+        return;
+      }
 
       RegisteredPlayer recordToKeep = allRecordsMatchingUuid.stream().max(Comparator.comparingLong(RegisteredPlayer::getLoginDate)).get();
       for (RegisteredPlayer record : allRecordsMatchingUuid) {
-        if (record != recordToKeep) this.playerDao.deleteById(record.getLowercaseNickname());
+        if (record != recordToKeep) {
+          this.playerDao.deleteById(record.getLowercaseNickname());
+        }
       }
 
       this.rekeyRecord(recordToKeep.getLowercaseNickname(), usernameLowercase, username);
