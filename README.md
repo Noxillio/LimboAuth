@@ -19,6 +19,14 @@ Test server: [``ely.su``](https://hotmc.ru/minecraft-server-203216)
 - [LimboFilter](https://github.com/Elytrium/LimboFilter) - Most powerful bot filtering solution for Minecraft proxies. Built with [LimboAPI](https://github.com/Elytrium/LimboAPI).
 - [LimboAPI](https://github.com/Elytrium/LimboAPI) - Library for sending players to virtual servers (called limbo)
 
+## Fork Info
+I forked LimboAuth to add various security and QoL improvements. Looking through this has inspired me to try and make my own Limbo plugin so I'll probably do that at some point.
+
+**Planned Upgrades:**
+- ☑️ ~~A Premium player can change their username to that which any other Premium player previously used. This causes LimboAuth to then give them that player's UUID instead of their own, which is a critical security issue.~~
+- ⬜ Add support for case-insensitive usernames.
+- ⬜ Allow `/premium` to function with a different username.
+
 ## Features of LimboAuth
 
 - Supports [H2](https://www.h2database.com/html/main.html), [MySQL](https://www.mysql.com/about/), [PostgreSQL](https://www.postgresql.org/about/) [databases](https://en.wikipedia.org/wiki/Database);
@@ -53,7 +61,7 @@ Test server: [``ely.su``](https://hotmc.ru/minecraft-server-203216)
 - ***limboauth.admin.reload* | /lauth reload** - Reload Plugin Command
 - ***limboauth.admin.***\* - Gives All Admin Permissions
 
-## Donation
+## Donate to the original author of LimboAuth
 
 Your donations are really appreciated. Donations wallets/links/cards:
 
