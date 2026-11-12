@@ -130,6 +130,7 @@ import org.slf4j.Logger;
     url = "https://elytrium.net/",
     authors = {
         "Elytrium (https://elytrium.net/)",
+        "Noxillio (https://github.com/Noxillio/LimboAuth)"
     },
     dependencies = {
         @Dependency(id = "limboapi"),
