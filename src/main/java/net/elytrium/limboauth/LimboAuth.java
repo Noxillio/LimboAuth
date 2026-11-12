@@ -533,11 +533,11 @@ public class LimboAuth {
 
   public void reconcileRecordsForPremiumPlayer(String username, UUID premiumUuid) {
     try {
-      String uuidString = premiumUuid.toString();
+      String premiumUuidString = premiumUuid.toString();
       String usernameLowercase = username.toLowerCase(Locale.ROOT);
 
       RegisteredPlayer registeredPlayer = AuthSessionHandler.fetchInfo(this.playerDao, username);
-      if (registeredPlayer != null && !registeredPlayer.getPremiumUuid().equalsIgnoreCase(uuidString)) {
+      if (registeredPlayer != null && !registeredPlayer.getPremiumUuid().equalsIgnoreCase(premiumUuidString)) {
         String placeholder = registeredPlayer.getPremiumUuid().toLowerCase(Locale.ROOT);
         if (this.playerDao.idExists(placeholder)) {
           this.playerDao.deleteById(usernameLowercase);
@@ -546,7 +546,7 @@ public class LimboAuth {
         }
       }
 
-      List<RegisteredPlayer> allRecordsMatchingUuid = this.playerDao.queryForEq(RegisteredPlayer.PREMIUM_UUID_FIELD, uuidString);
+      List<RegisteredPlayer> allRecordsMatchingUuid = this.playerDao.queryForEq(RegisteredPlayer.PREMIUM_UUID_FIELD, premiumUuidString);
       if (allRecordsMatchingUuid.isEmpty()) {
         return;
       }
@@ -556,6 +556,12 @@ public class LimboAuth {
         if (record != recordToKeep) {
           this.playerDao.deleteById(record.getLowercaseNickname());
         }
+      }
+
+      String currentUuid = recordToKeep.getUuid();
+      if (!currentUuid.isEmpty() && !this.playerDao.queryForEq(RegisteredPlayer.PREMIUM_UUID_FIELD, currentUuid).isEmpty()) {
+        recordToKeep.setUuid(premiumUuidString);
+        this.playerDao.update(recordToKeep);
       }
 
       this.rekeyRecord(recordToKeep.getLowercaseNickname(), usernameLowercase, username);
